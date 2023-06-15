@@ -41,7 +41,7 @@ public class UsuarioController {
     }
 
     @PostMapping
-    public ResponseEntity<UsuarioDTO> insert(@Valid @RequestBody UsuarioDTO objDto){
+    public ResponseEntity<UsuarioDTO> create(@Valid @RequestBody UsuarioDTO objDto){
         Usuario usuario = service.create(objDto);
         URI uri = ServletUriComponentsBuilder
                 .fromCurrentRequest()
