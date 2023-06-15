@@ -4,13 +4,16 @@ import com.github.rafaelsilva91.encriptarsenhausuario.domain.Usuario;
 import com.github.rafaelsilva91.encriptarsenhausuario.domain.dtos.UsuarioDTO;
 import com.github.rafaelsilva91.encriptarsenhausuario.repository.UsuarioRepository;
 import com.github.rafaelsilva91.encriptarsenhausuario.services.UsuarioService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.validation.Valid;
 import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -18,10 +21,12 @@ import java.util.stream.Collectors;
 @CrossOrigin(origins = "*")
 public class UsuarioController {
 
-    private UsuarioService service;
+    private final UsuarioService service;
+    private final PasswordEncoder encoder;
 
-    public UsuarioController(UsuarioService service) {
+    public UsuarioController(UsuarioService service, PasswordEncoder encoder) {
         this.service = service;
+        this.encoder = encoder;
     }
 
     @GetMapping("/list")
@@ -42,6 +47,9 @@ public class UsuarioController {
 
     @PostMapping
     public ResponseEntity<UsuarioDTO> create(@Valid @RequestBody UsuarioDTO objDto){
+        //System.out.println("senha: "+objDto.getPassword());
+        objDto.setPassword(encoder.encode(objDto.getPassword()));
+        //System.out.println("senha encriptada: "+objDto.getPassword());
         Usuario usuario = service.create(objDto);
         URI uri = ServletUriComponentsBuilder
                 .fromCurrentRequest()
@@ -49,6 +57,23 @@ public class UsuarioController {
                 .buildAndExpand(usuario.getId())
                 .toUri();
         return ResponseEntity.created(uri).build();
+    }
+
+    @GetMapping("/validaSenha")
+    public ResponseEntity<Boolean> validPassword(@RequestParam String login,
+                                                 @RequestParam String password){
+
+        Usuario usuario = service.findByLogin(login);
+
+        if(usuario == null){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
+        }
+
+        boolean valid = false;
+        valid = encoder.matches(password, usuario.getPassword());
+        HttpStatus status = (valid) ? HttpStatus.OK : HttpStatus.UNAUTHORIZED;
+
+        return ResponseEntity.status(status).body(valid);
     }
 
 }

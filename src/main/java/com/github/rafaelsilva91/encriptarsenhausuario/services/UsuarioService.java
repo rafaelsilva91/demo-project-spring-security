@@ -48,4 +48,10 @@ public class UsuarioService {
         return usuario.orElseThrow(()->new ObjectNotFoundExceptions("Usuario não encontrado!"));
 
     }
+
+    public Usuario findByLogin(String login){
+        Optional<Usuario> usuario = repository.findByLogin(login);
+        return usuario.orElseThrow(()->new ObjectNotFoundExceptions("Usuario não encontrado!"));
+    }
+
 }
